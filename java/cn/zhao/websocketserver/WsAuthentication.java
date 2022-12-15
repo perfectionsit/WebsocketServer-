@@ -9,5 +9,5 @@ public interface WsAuthentication {
      * 拦截请求同时鉴权session与token
      * @return 放行请求返回true，否则返回false
      */
-    boolean authentication(Session session, WsToken token);
+    boolean authentication(Session session, WsToken token) throws Exception;
 }
