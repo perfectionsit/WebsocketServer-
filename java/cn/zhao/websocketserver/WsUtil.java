@@ -8,6 +8,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Websocket工具类
  */
@@ -16,7 +19,7 @@ public class WsUtil {
      * 强制该Session下线(主动，断开连接且前端连接断开类型为”服务器踢出“)
      */
     static public void forcedLogout(Session session) throws IOException {
-        if(session.isOpen()){
+        if(session!=null&&session.isOpen()){
             sendClose(session);
             session.close();
         }
@@ -24,39 +27,47 @@ public class WsUtil {
     /**
      * 向该Session发送响应数据
      * @param count 前端请求下标
-     * @param data  数据（JSON格式字符串或者byte[]类型）
+     * @param data  数据
      */
     static public void sendResponse(Session session,int count,Object data) throws IOException {
-        if(session.isOpen())session.getBasicRemote().sendBinary(responseEncode("response", count, data));
+        if(session!=null&&session.isOpen())session.getBasicRemote().sendBinary(responseEncode("response", count, data));
     }
+
     /**
      * 向该Session发送通知数据
-     * @param data  JSON数据：{status：”前端方法映射路径“,data:”通知数据“}（需要自己构造）
+     * @param session 前端Session
+     * @param status 通知方法映射路径（函数名）
+     * @param data 数据
      */
-    static public void sendNotice(Session session,Object data) throws IOException {
-        if(session.isOpen())session.getBasicRemote().sendBinary(responseEncode("notice", -1, data));
+    static public void sendNotice(Session session,String status,Object data) throws IOException {
+        if(session!=null){
+            Map<String ,Object> json = new HashMap<>();
+            json.put("status",status);
+            json.put("data",data);
+            if(session.isOpen())session.getBasicRemote().sendBinary(responseEncode("notice", -1, JSONObject.toJSONString(json)));
+        }
     }
     /**
      * 通知该Session下线(被动，前端连接断开类型为”服务器踢出“，但是不断开连接)
      */
     static public void sendClose(Session session) throws IOException {
-        if(session.isOpen())session.getBasicRemote().sendBinary(responseEncode("", -1, ""));
+        if(session!=null&&session.isOpen())session.getBasicRemote().sendBinary(responseEncode("", -1, ""));
     }
     /**
      * 发送Pong信息
      */
     static public void sendPong(Session session) throws IOException {
-        if(session.isOpen())session.getBasicRemote().sendBinary(ByteBuffer.wrap(new byte[1]));
+        if(session!=null&&session.isOpen())session.getBasicRemote().sendBinary(ByteBuffer.wrap(new byte[1]));
     }
     /**
      * 将后端相应编码<br/>
      * [1:responseType(response|notice|close)]<br/>
      * [4:count]<br/>
-     * [1:dataType(1=String,0=bytes)]<br/>
+     * [1:dataType(2=null,1=String,0=bytes)]<br/>
      * [dataLength-6:data]
      * @param responseType 要相应的类型(response|notice|close)
      * @param count 前端请求下标
-     * @param data 将编码数据
+     * @param data 将编码数据,暂时仅支持String与byte[]类型
      * @return  编码后比特数组
      */
     public static ByteBuffer responseEncode(String responseType, int count, Object data) throws IOException {
@@ -75,15 +86,17 @@ public class WsUtil {
             os.write((byte) (_count & (255)));
             _count >>= 8;
         }
-        if (data instanceof String) {
-            os.write(1);
-            os.write(((String) data).getBytes(StandardCharsets.UTF_8));
-        } else {
+        if(data == null){
+            os.write(2);
+        }
+        else if(data instanceof byte[]){
             os.write(0);
             os.write((byte[]) data);
+        }else{
+            os.write(1);
+            os.write((data.toString()).getBytes(StandardCharsets.UTF_8));
         }
-        byte[] a = os.toByteArray();
-        return ByteBuffer.wrap(a);
+        return ByteBuffer.wrap(os.toByteArray());
     }
     /**
      * 将前端请求解码 <br/>

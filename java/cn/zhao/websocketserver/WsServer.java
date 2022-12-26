@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 /**
  * Websocket信息处理端口
+ * 注意，在spring中Bean的管理方式为单例，可websocket服务是多对象，
+ * 每个会话会创建一个websocket对象。导致除了第一个websocket，其他的都不能注入实例，
+ * 所以不要用@Resource或者@Autowired注入该类,否则将注入失败获取NULL
  */
 @Component
 @ServerEndpoint("/zhao")
@@ -59,7 +62,7 @@ public class WsServer {
                 boolean authentication = true;
                 //拦截器
                 if (!WsConfiguration.authentication.isEmpty()) {
-                    authentication = (boolean) WsConfiguration.authentication.getMethod().invoke(WsConfiguration.authentication.getBean(), session, wsRequestBody.getToken());
+                    authentication = (boolean) WsConfiguration.authentication.getMethod().invoke(WsConfiguration.authentication.getBean(), session, wsRequestBody);
                 }
                 if (authentication&&wsRequestBody.getCount()!=-1) {
                     MethodBean methodBean;

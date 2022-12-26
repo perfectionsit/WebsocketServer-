@@ -1,8 +1,10 @@
 package cn.zhao.websocketserver;
+
 import cn.zhao.websocketserver.annotation.WsController;
 import cn.zhao.websocketserver.annotation.WsMapping;
 import cn.zhao.websocketserver.pojo.MethodBean;
-import cn.zhao.websocketserver.pojo.WsToken;
+import cn.zhao.websocketserver.pojo.WsRequestBody;
+import jakarta.websocket.Session;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
@@ -12,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodIntrospector;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
-import jakarta.websocket.Session;
+
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +35,7 @@ public class WsConfiguration implements SmartInitializingSingleton, ApplicationC
         if (!authenticationClazz.isEmpty()) {
             for (Map.Entry<String, WsAuthentication> entry : authenticationClazz.entrySet()) {
                 try {
-                    Method authenticationMethod = entry.getValue().getClass().getMethod("authentication", Session.class, WsToken.class);
+                    Method authenticationMethod = entry.getValue().getClass().getMethod("authentication", Session.class, WsRequestBody.class);
                     authenticationMethod.setAccessible(true);
                     authentication.setMethodBean(authenticationMethod, entry.getValue(), null);
                     break;
