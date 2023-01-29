@@ -1,5 +1,7 @@
 package cn.zhao.websocketserver.pojo;
-import com.alibaba.fastjson2.JSONObject;
+
+import java.util.Arrays;
+
 /**
  * Websocket请求包POJO
  */
@@ -16,24 +18,38 @@ public class WsRequestBody {
      * 方法标识（不可为空）
      */
     private int count;
-    /**
-     * 请求是否包含byte[]类型，String类型请求体、
-     */
-    private boolean hasFile, hasData;
+
     @Override
     public String toString() {
-        return "WebsocketRequestBody{" +
-                "token='" + token + '\'' +
+        return "WsRequestBody{" +
+                "token=" + token +
                 ", method='" + method + '\'' +
                 ", count=" + count +
                 ", hasFile=" + hasFile +
                 ", hasData=" + hasData +
-                ", file=" + file +
-                ", data=" + data +
+                ", requestData='" + requestData + '\'' +
+                ", file=" + Arrays.toString(file) +
                 '}';
     }
+
+    /**
+     * 请求是否包含byte[]类型，String类型请求体、
+     */
+    private boolean hasFile, hasData;
+    /**
+     * 请求体
+     */
+    private String requestData;
+    /**
+     * 请求体文件
+     */
     private byte[] file;
-    JSONObject data;
+    public String getRequestData() {
+        return requestData;
+    }
+    public void setRequestData(String requestData) {
+        this.requestData = requestData;
+    }
     public WsToken getToken() {
         return token;
     }
@@ -69,11 +85,5 @@ public class WsRequestBody {
     }
     public void setFile(byte[] file) {
         this.file = file;
-    }
-    public JSONObject getData() {
-        return data;
-    }
-    public void setData(JSONObject data) {
-        this.data = data;
     }
 }

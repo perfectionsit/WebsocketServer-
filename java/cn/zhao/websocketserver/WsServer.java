@@ -2,6 +2,7 @@ package cn.zhao.websocketserver;
 import cn.zhao.websocketserver.pojo.MethodBean;
 import cn.zhao.websocketserver.pojo.WsRequestBody;
 import cn.zhao.websocketserver.pojo.WsToken;
+import com.alibaba.fastjson2.JSONObject;
 import org.springframework.stereotype.Component;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnMessage;
@@ -69,6 +70,11 @@ public class WsServer {
                     if((methodBean=WsConfiguration.methodMap.get(wsRequestBody.getMethod()))!=null){
                         //根据映射方法入参类型与键名注入方法
                         ArrayList<Object> prams = new ArrayList<>();
+                        JSONObject jsonObject = null;
+                        try{
+                            jsonObject = JSONObject.parseObject(wsRequestBody.getRequestData());
+                        }catch (Exception e){}
+                        JSONObject finalJsonObject = jsonObject;
                         Arrays.stream(methodBean.getParameters()).forEach(pram -> {
                             if (pram.getType().equals(WsRequestBody.class)) {
                                 prams.add(wsRequestBody);
@@ -77,7 +83,12 @@ public class WsServer {
                             } else if (pram.getType().equals(WsToken.class)) {
                                 prams.add(wsRequestBody.getToken());
                             } else {
-                                prams.add((wsRequestBody.getData()).getObject(pram.getName(), pram.getType()));
+                                if (finalJsonObject != null) {
+                                    prams.add(finalJsonObject.getObject(pram.getName(), pram.getType()));
+                                }
+                                else{
+                                    throw new RuntimeException("请求无法序列化请检查请求体");
+                                }
                             }
                         });
                         if (session.isOpen())

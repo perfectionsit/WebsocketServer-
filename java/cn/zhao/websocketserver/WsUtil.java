@@ -60,7 +60,7 @@ public class WsUtil {
         if(session!=null&&session.isOpen())session.getBasicRemote().sendBinary(ByteBuffer.wrap(new byte[1]));
     }
     /**
-     * 将后端相应编码<br/>
+     * 将后端响应编码<br/>
      * [1:responseType(response|notice|close)]<br/>
      * [4:count]<br/>
      * [1:dataType(2=null,1=String,0=bytes)]<br/>
@@ -143,7 +143,7 @@ public class WsUtil {
             hasData = true;
             byte[] dataBytes = new byte[getLength(in)];
             lastLength -= (in.read(dataBytes) + 4);
-            wsRequestBody.setData(JSONObject.parseObject(new String(dataBytes, StandardCharsets.UTF_8)));
+            wsRequestBody.setRequestData(new String(dataBytes, StandardCharsets.UTF_8));
         }
         wsRequestBody.setHasData(hasData);
         return lastLength == 0 ? wsRequestBody : null;
