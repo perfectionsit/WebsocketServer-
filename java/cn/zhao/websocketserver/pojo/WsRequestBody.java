@@ -15,23 +15,9 @@ public class WsRequestBody {
      */
     private String  method;
     /**
-     * 方法标识（不可为空）
+     * 请求标识（不可为空）
      */
     private int count;
-
-    @Override
-    public String toString() {
-        return "WsRequestBody{" +
-                "token=" + token +
-                ", method='" + method + '\'' +
-                ", count=" + count +
-                ", hasFile=" + hasFile +
-                ", hasData=" + hasData +
-                ", requestData='" + requestData + '\'' +
-                ", file=" + Arrays.toString(file) +
-                '}';
-    }
-
     /**
      * 请求是否包含byte[]类型，String类型请求体、
      */
@@ -85,5 +71,17 @@ public class WsRequestBody {
     }
     public void setFile(byte[] file) {
         this.file = file;
+    }
+    @Override
+    public String toString() {
+        return "WsRequestBody{" +
+                "token=" + token +
+                ", method='" + method + '\'' +
+                ", count=" + count +
+                ", hasFile=" + hasFile +
+                ", hasData=" + hasData +
+                ", requestData='" + requestData + '\'' +
+                ", file=" + Arrays.toString(file) +
+                '}';
     }
 }

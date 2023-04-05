@@ -6,4 +6,5 @@ import jakarta.websocket.Session;
 public interface WsEvent {
     void onOpen(Session session) throws Exception;
     void onClose(Session session) throws Exception;
+    void onError(Session session,Throwable e) throws Exception;
 }

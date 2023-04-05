@@ -29,6 +29,7 @@ public class WsConfiguration implements SmartInitializingSingleton, ApplicationC
     public static MethodBean authentication = new MethodBean();
     public static MethodBean onOpenEvent = new MethodBean();
     public static MethodBean onCloseEvent = new MethodBean();
+    public static MethodBean onErrorEvent = new MethodBean();
     @Override
     public void afterSingletonsInstantiated() {
         Map<String, WsAuthentication> authenticationClazz = context.getBeansOfType(WsAuthentication.class);
@@ -51,10 +52,13 @@ public class WsConfiguration implements SmartInitializingSingleton, ApplicationC
                     Class<? extends WsEvent> eventClass = entry.getValue().getClass();
                     Method onCloseMethod = eventClass.getMethod("onClose", Session.class);
                     Method onOpenMethod = eventClass.getMethod("onOpen", Session.class);
+                    Method onErrorMethod = eventClass.getMethod("onError", Session.class,Throwable.class);
                     onCloseMethod.setAccessible(true);
                     onOpenMethod.setAccessible(true);
+                    onErrorMethod.setAccessible(true);
                     onOpenEvent.setMethodBean(onOpenMethod,entry.getValue(),null);
                     onCloseEvent.setMethodBean(onCloseMethod,entry.getValue(),null);
+                    onErrorEvent.setMethodBean(onErrorMethod,entry.getValue(),null);
                     break;
                 } catch (NoSuchMethodException e) {
                     throw new RuntimeException(e);

@@ -14,5 +14,5 @@ public @interface WsMapping {
     /**
      * 方法映射路径，如控制器映射路径为One，方法映射路径为Two，则前端映射该方法路径为OneTwo
      */
-    String value();//asd
+    String value();
 }

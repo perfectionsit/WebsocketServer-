@@ -57,7 +57,8 @@ public class WsUtil {
      * 发送Pong信息
      */
     static public void sendPong(Session session) throws IOException {
-        if(session!=null&&session.isOpen())session.getBasicRemote().sendBinary(ByteBuffer.wrap(new byte[1]));
+        if(session!=null&&session.isOpen())session.getBasicRemote().sendBinary(
+                ByteBuffer.wrap(new byte[1]));
     }
     /**
      * 将后端响应编码<br/>

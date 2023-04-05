@@ -1,19 +1,19 @@
 package cn.zhao.websocketserver;
+
 import cn.zhao.websocketserver.pojo.MethodBean;
 import cn.zhao.websocketserver.pojo.WsRequestBody;
 import cn.zhao.websocketserver.pojo.WsToken;
 import com.alibaba.fastjson2.JSONObject;
+import jakarta.websocket.*;
 import org.springframework.stereotype.Component;
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+
 /**
  * Websocket信息处理端口
  * 注意，在spring中Bean的管理方式为单例，可websocket服务是多对象，
@@ -24,8 +24,10 @@ import java.util.Arrays;
 @ServerEndpoint("/zhao")
 public class WsServer {
     private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
     /**
      * 事件，处理新连接
+     *
      * @param session 连接Session
      */
     @OnOpen
@@ -34,8 +36,10 @@ public class WsServer {
             WsConfiguration.onOpenEvent.getMethod().invoke(WsConfiguration.onOpenEvent.getBean(), session);
         }
     }
+
     /**
      * 事件，处理断开的连接
+     *
      * @param session 连接Session
      */
     @OnClose
@@ -45,7 +49,20 @@ public class WsServer {
         }
     }
     /**
+     * 事件，处理错误的连接
+     *
+     * @param session 连接Session
+     */
+    @OnError
+    public void onError(Session session, Throwable e) throws InvocationTargetException, IllegalAccessException {
+        if (!WsConfiguration.onErrorEvent.isEmpty()) {
+            WsConfiguration.onErrorEvent.getMethod().invoke(WsConfiguration.onErrorEvent.getBean(), session, e);
+        }
+    }
+
+    /**
      * 处理请求
+     *
      * @param message 加密的请求
      * @param session 连接Session
      */
@@ -63,41 +80,47 @@ public class WsServer {
                 boolean authentication = true;
                 //拦截器
                 if (!WsConfiguration.authentication.isEmpty()) {
-                    authentication = (boolean) WsConfiguration.authentication.getMethod().invoke(WsConfiguration.authentication.getBean(), session, wsRequestBody);
+                    authentication = (boolean) WsConfiguration
+                            .authentication.getMethod().invoke(WsConfiguration.authentication.getBean(), session, wsRequestBody);
                 }
-                if (authentication&&wsRequestBody.getCount()!=-1) {
-                    MethodBean methodBean;
-                    if((methodBean=WsConfiguration.methodMap.get(wsRequestBody.getMethod()))!=null){
-                        //根据映射方法入参类型与键名注入方法
-                        ArrayList<Object> prams = new ArrayList<>();
-                        JSONObject jsonObject = null;
-                        try{
-                            jsonObject = JSONObject.parseObject(wsRequestBody.getRequestData());
-                        }catch (Exception e){}
-                        JSONObject finalJsonObject = jsonObject;
-                        Arrays.stream(methodBean.getParameters()).forEach(pram -> {
-                            if (pram.getType().equals(WsRequestBody.class)) {
-                                prams.add(wsRequestBody);
-                            } else if (pram.getType().equals(byte[].class)) {
-                                prams.add(wsRequestBody.getFile());
-                            } else if (pram.getType().equals(WsToken.class)) {
-                                prams.add(wsRequestBody.getToken());
-                            } else {
-                                if (finalJsonObject != null) {
-                                    prams.add(finalJsonObject.getObject(pram.getName(), pram.getType()));
-                                }
-                                else{
-                                    throw new RuntimeException("请求无法序列化请检查请求体");
-                                }
+                try {
+                    if (authentication && wsRequestBody.getCount() != -1) {
+                        MethodBean methodBean;
+                        if ((methodBean = WsConfiguration.methodMap.get(wsRequestBody.getMethod())) != null) {
+                            //根据映射方法入参类型与键名注入方法
+                            ArrayList<Object> prams = new ArrayList<>();
+                            JSONObject jsonObject = null;
+                            try {
+                                jsonObject = JSONObject.parseObject(wsRequestBody.getRequestData());
+                            } catch (Exception e) {
                             }
-                        });
-                        if (session.isOpen())
-                            WsUtil.sendResponse(session, wsRequestBody.getCount(), methodBean.getMethod().invoke(methodBean.getBean(), prams.toArray()));
-                    }else{
-                        throw new RuntimeException("请求没有找到对应映射方法路径");
+                            JSONObject finalJsonObject = jsonObject;
+                            Arrays.stream(methodBean.getParameters()).forEach(pram -> {
+                                if (pram.getType().equals(WsRequestBody.class)) {
+                                    prams.add(wsRequestBody);
+                                } else if (pram.getType().equals(byte[].class)) {
+                                    prams.add(wsRequestBody.getFile());
+                                } else if (pram.getType().equals(WsToken.class)) {
+                                    prams.add(wsRequestBody.getToken());
+                                } else {
+                                    if (finalJsonObject != null) {
+                                        prams.add(finalJsonObject.getObject(pram.getName(), pram.getType()));
+                                    } else {
+                                        throw new RuntimeException("请求无法序列化请检查请求体");
+                                    }
+                                }
+                            });
+                            if (session.isOpen())
+                                WsUtil.sendResponse(session, wsRequestBody.getCount(), methodBean.getMethod().invoke(methodBean.getBean(), prams.toArray()));
+                        } else {
+                            throw new RuntimeException("请求没有找到对应映射方法路径");
+                        }
                     }
+                } catch (Exception e) {
+                    if (session.isOpen()) WsUtil.sendResponse(session, wsRequestBody.getCount(), e.getMessage());
                 }
             }
+            //处理心跳包
             case 2 -> WsUtil.sendPong(session);
         }
     }
