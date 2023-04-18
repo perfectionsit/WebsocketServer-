@@ -103,7 +103,7 @@ public class WsServer {
                             .authentication.getMethod().invoke(WsConfiguration.authentication.getBean(), session, wsRequestBody);
                 }
                 try {
-                    if (authentication && wsRequestBody.getCount() != -1) {
+                    if (authentication && wsRequestBody.getCount() != 0) {
                         MethodBean methodBean;
                         if ((methodBean = WsConfiguration.methodMap.get(wsRequestBody.getMethod())) != null) {
                             //根据映射方法入参类型与键名注入方法
